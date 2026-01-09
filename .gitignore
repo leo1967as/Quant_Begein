@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Data
+Bar/
+*.csv
+*.parquet
+Bar/*.csv
+
+# Models & Artifacts
+model/*.json
+model/*.pkl
+*.png
+
+# IDE
+.vscode/
+.idea/
