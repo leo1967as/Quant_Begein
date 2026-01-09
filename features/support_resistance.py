@@ -41,7 +41,7 @@ def detect_swing_points(df: pl.DataFrame, lookback: int = 5) -> pl.DataFrame:
     ])
 
 
-def calculate_sr_features(df: pl.DataFrame, lookback: int = 5) -> pl.DataFrame:
+def add_support_resistance(df: pl.DataFrame, lookback: int = 5) -> pl.DataFrame:
     """
     Calculate Support/Resistance features.
     

@@ -36,8 +36,21 @@ def transform_ticks(input_file, output_folder, interval="5m"):
         datetime = (pl.col("date") + " " + pl.col("time")).str.to_datetime("%Y%m%d %H:%M:%S")
     )
 
-    # 2. Resample to OHLC
-    # We use 'bid' as the primary price source
+    # 2. Resample to OHLC and Calculate Delta (Order Flow)
+    # Classify Trade Direction (Buy or Sell Initiative)
+    # If Last >= Ask -> Buy Aggressor (Buy Volume)
+    # If Last <= Bid -> Sell Aggressor (Sell Volume)
+    
+    # We need to do this BEFORE groupby.
+    # Note: 'vol' might be 0, so we use 1 (tick count) if vol is 0?
+    # User requested using 'vol' column logic, but we know vol is 0.
+    # So we should use 1 for each tick as volume.
+    
+    lf = lf.with_columns([
+        pl.when(pl.col("last") >= pl.col("ask")).then(pl.lit(1)).otherwise(0).alias("buy_vol"),
+        pl.when(pl.col("last") <= pl.col("bid")).then(pl.lit(1)).otherwise(0).alias("sell_vol")
+    ])
+
     ohlc_lf = (
         lf.group_by_dynamic("datetime", every=interval)
         .agg([
@@ -45,9 +58,16 @@ def transform_ticks(input_file, output_folder, interval="5m"):
             pl.col("bid").max().alias("high"),
             pl.col("bid").min().alias("low"),
             pl.col("bid").last().alias("close"),
-            pl.col("vol").sum().alias("volume"),
+            pl.len().alias("volume"), # Use Tick Count as Volume
+            pl.col("buy_vol").sum().alias("buy_volume"),
+            pl.col("sell_vol").sum().alias("sell_volume"),
             pl.len().alias("tick_count")
         ])
+    )
+    
+    # Calculate Delta
+    ohlc_lf = ohlc_lf.with_columns(
+        (pl.col("buy_volume") - pl.col("sell_volume")).alias("delta")
     )
 
     # 3. Collect and Save

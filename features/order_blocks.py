@@ -61,7 +61,7 @@ def detect_order_blocks(df: pl.DataFrame, atr_multiplier: float = 1.5) -> pl.Dat
         atr.alias("atr_ob")
     ])
 
-def calculate_ob_features(df: pl.DataFrame) -> pl.DataFrame:
+def add_order_blocks(df: pl.DataFrame) -> pl.DataFrame:
     """
     Calculate features based on Order Block proximity.
     
