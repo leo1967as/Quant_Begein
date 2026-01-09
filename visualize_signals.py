@@ -60,8 +60,26 @@ def visualize_signals(data_path, model_dir="model", n_bars=300):
     
     # Thresholding (0.6 for slightly higher confidence than training)
     threshold = 0.6
-    pred_top = (prob_top > threshold).astype(int)
-    pred_bottom = (prob_bottom > threshold).astype(int)
+    pred_top_raw = (prob_top > threshold).astype(int)
+    pred_bottom_raw = (prob_bottom > threshold).astype(int)
+    
+    # [FILTER] Cooldown Logic
+    # Simple loop to remove consecutive signals
+    cooldown = 10
+    last_top = -cooldown
+    last_bot = -cooldown
+    
+    pred_top = np.zeros_like(pred_top_raw)
+    pred_bottom = np.zeros_like(pred_bottom_raw)
+    
+    for i in range(len(pred_top_raw)):
+        if pred_top_raw[i] == 1 and (i - last_top >= cooldown):
+            pred_top[i] = 1
+            last_top = i
+            
+        if pred_bottom_raw[i] == 1 and (i - last_bot >= cooldown):
+            pred_bottom[i] = 1
+            last_bot = i
     
     # Prepare Plot Data
     df_pd = df_vis.select(["datetime", "open", "high", "low", "close", "volume", "is_zigzag_high", "is_zigzag_low"]).to_pandas()

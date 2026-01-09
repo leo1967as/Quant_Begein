@@ -151,6 +151,14 @@ def prepare_data(data_path: str) -> pl.DataFrame:
     """Load and prepare all data with features and targets"""
     print(f"Loading data from {data_path}...")
     df = pl.read_csv(data_path, try_parse_dates=True)
+    
+    # [PATCH] Fix Volume=0 issue by using tick_count
+    if "tick_count" in df.columns:
+        # Check if volume is effectively zero (sum < 1 just to be safe)
+        total_vol = df.select(pl.col("volume").sum()).item()
+        if total_vol == 0:
+            print("WARNING: Volume column is 0. Using 'tick_count' as volume.")
+            df = df.with_columns(pl.col("tick_count").alias("volume"))
 
     
     print("Adding technical indicators...")
